@@ -83,10 +83,22 @@ RUN curl -o odoo.deb -sSL http://nightly.odoo.com/${ODOO_VERSION}/nightly/deb/od
 COPY ./entrypoint.sh /
 COPY ./odoo.conf /etc/odoo/
 
+# Create group 
+RUN groupadd -g 999 odoogroup
+
+# Change odoo user UID/GID 150
+RUN usermod -u 150 odoo 
+
 # Set permissions and Mount /var/lib/odoo to allow restoring filestore and /mnt/extra-addons for users addons
 RUN chown odoo /etc/odoo/odoo.conf \
     && mkdir -p /mnt/extra-addons \
-    && chown -R odoo /mnt/extra-addons
+    && chmod -R 755 /mnt/extra-addons \
+    && chown -R odoo:odoogroup /mnt/extra-addons \
+    && mkdir -p /var/lib/odoo \
+    && chown -R odoo:odoogroup /var/lib/odoo \
+    && chmod -R 755 /var/lib/odoo \
+    && chown -R odoo:odoogroup /usr/lib/python3/dist-packages/odoo
+    
 VOLUME ["/var/lib/odoo", "/mnt/extra-addons"]
 
 # Expose Odoo services
