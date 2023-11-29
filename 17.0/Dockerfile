@@ -84,20 +84,21 @@ COPY ./entrypoint.sh /
 COPY ./odoo.conf /etc/odoo/
 
 # Create group 
-RUN groupadd -g 999 odoogroup
+# RUN groupadd -g 150 odoo
 
 # Change odoo user UID/GID 150
-RUN usermod -u 150 odoo
+RUN usermod -u 150 odoo \
+ && groupmod -g 150 odoo
 
 # Set permissions and Mount /var/lib/odoo to allow restoring filestore and /mnt/extra-addons for users addons
 RUN chown odoo /etc/odoo/odoo.conf \
     && mkdir -p /mnt/extra-addons \
     && chmod -R 755 /mnt/extra-addons \
-    && chown -R odoo:odoogroup /mnt/extra-addons \
+    && chown -R odoo:odoo /mnt/extra-addons \
     && mkdir -p /var/lib/odoo \
-    && chown -R odoo:odoogroup /var/lib/odoo \
+    && chown -R odoo:odoo /var/lib/odoo \
     && chmod -R 775 /var/lib/odoo \
-    && chown -R odoo:odoogroup /usr/lib/python3/dist-packages/odoo
+    && chown -R odoo:odoo /usr/lib/python3/dist-packages/odoo
     
 VOLUME ["/var/lib/odoo", "/mnt/extra-addons"]
 
