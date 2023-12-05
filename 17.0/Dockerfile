@@ -83,9 +83,6 @@ RUN curl -o odoo.deb -sSL http://nightly.odoo.com/${ODOO_VERSION}/nightly/deb/od
 COPY ./entrypoint.sh /
 COPY ./odoo.conf /etc/odoo/
 
-# Create group 
-# RUN groupadd -g 150 odoo
-
 # Change odoo user UID/GID 150
 RUN usermod -u 150 odoo \
  && groupmod -g 150 odoo
