@@ -4,7 +4,7 @@ MAINTAINER Odoo S.A. <info@odoo.com>
 SHELL ["/bin/bash", "-xo", "pipefail", "-c"]
 
 # Generate locale C.UTF-8 for postgres and general locale data
-ENV LANG en_US.UTF-8
+ENV LANG=en_US.UTF-8
 
 # Retrieve the target architecture to install the correct wkhtmltopdf package
 ARG TARGETARCH
@@ -70,11 +70,13 @@ RUN echo 'deb http://apt.postgresql.org/pub/repos/apt/ jammy-pgdg main' > /etc/a
 RUN npm install -g rtlcss
 
 # Install Odoo
-ENV ODOO_VERSION 17.0
-ARG ODOO_RELEASE=20231120
-ARG ODOO_SHA=57b836de2901c4ec5e3de433eb9258024701d255
-RUN curl -o odoo.deb -sSL http://nightly.odoo.com/${ODOO_VERSION}/nightly/deb/odoo_${ODOO_VERSION}.${ODOO_RELEASE}_all.deb \
-    && echo "${ODOO_SHA} odoo.deb" | sha1sum -c - \
+ENV ODOO_VERSION=17.0
+# ARG ODOO_RELEASE=20241021
+# ARG ODOO_SHA=42e0cfd00a39dbdd396e9bdbae5d792e33df7e73 # To be found in odoo_17.0.latest_amd64.changes
+# RUN curl -o odoo.deb -sSL http://nightly.odoo.com/${ODOO_VERSION}/nightly/deb/odoo_${ODOO_VERSION}.${ODOO_RELEASE}_all.deb \
+RUN curl -o odoo.deb -sSL http://nightly.odoo.com/${ODOO_VERSION}/nightly/deb/odoo_${ODOO_VERSION}.latest_all.deb \
+#    && echo "${ODOO_SHA} odoo.deb" | sha1sum -c - \
+    && echo sha1sum odoo.deb \
     && apt-get update \
     && apt-get -y install --no-install-recommends ./odoo.deb \
     && rm -rf /var/lib/apt/lists/* odoo.deb
@@ -87,23 +89,28 @@ COPY ./odoo.conf /etc/odoo/
 RUN usermod -u 150 odoo \
  && groupmod -g 150 odoo
 
-# Set permissions and Mount /var/lib/odoo to allow restoring filestore and /mnt/extra-addons for users addons
+# Set permissions and Mount /var/lib/odoo to allow restoring filestore and /mnt/extra-addons and /mnt/odoo-enterprise for custom & enterprise addons
 RUN chown odoo /etc/odoo/odoo.conf \
     && mkdir -p /mnt/extra-addons \
     && chmod -R 755 /mnt/extra-addons \
     && chown -R odoo:odoo /mnt/extra-addons \
+    && mkdir -p /mnt/odoo-enterprise \
+    && chmod -R 755 /mnt/odoo-enterprise \
+    && chown -R odoo:odoo /mnt/odoo-enterprise \
     && mkdir -p /var/lib/odoo \
     && chown -R odoo:odoo /var/lib/odoo \
     && chmod -R 775 /var/lib/odoo \
-    && chown -R odoo:odoo /usr/lib/python3/dist-packages/odoo
+#    && chown -R odoo:odoo /usr/lib/python3/dist-packages/odoo \
+    && mkdir -p /var/log/odoo \
+    && chown -R odoo:odoo /var/log/odoo
     
-VOLUME ["/var/lib/odoo", "/mnt/extra-addons"]
+VOLUME ["/var/lib/odoo", "/mnt/extra-addons", "/mnt/odoo-enterprise"]
 
 # Expose Odoo services
 EXPOSE 8069 8071 8072
 
 # Set the default config file
-ENV ODOO_RC /etc/odoo/odoo.conf
+ENV ODOO_RC=/etc/odoo/odoo.conf
 
 COPY wait-for-psql.py /usr/local/bin/wait-for-psql.py
 
